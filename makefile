@@ -63,3 +63,7 @@ fresh:
 docker-rm:
 	docker stop `docker ps -aq` ;
 	docker rm `docker ps -aq`
+
+.PHONY: ssl
+ssl:
+	sh ./docker/nginx/ssl/ssl.sh
