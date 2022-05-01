@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - 8080:80
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ../laravel/public/:/var/www/public/
+    working_dir: /var/www/
+
+  php:
+    build: ./php/
+    user: $user
+    container_name: php
+    dns: 8.8.8.8
+    volumes:
+      - ../laravel/:/var/www/
+
+  db:
+    image: mysql:5.7
+    container_name: db
+    environment:
+      MYSQL_DATABASE: database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
+      TZ: Asia/Tokyo
+    volumes:
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
