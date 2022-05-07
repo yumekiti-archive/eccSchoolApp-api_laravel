@@ -28,7 +28,7 @@ Route::controller(ScrapingController::class)->group(function () {
     Route::post('/news/{id}','only');
 
     // カレンダー系
-    Route::post('/calendar/{month}','calendar');
+    Route::post('/calendar/{year}/{month}','calendar');
 
     // 出席率
     Route::post('/attendance','attendance');

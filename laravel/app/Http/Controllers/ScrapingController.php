@@ -133,7 +133,7 @@ class ScrapingController extends Controller
     return $datas;
   }
 
-  public function calendar($month, Request $request)
+  public function calendar($year, $month, Request $request)
   {
     // データの初期化
     $days = array();  // 日にち
@@ -150,7 +150,7 @@ class ScrapingController extends Controller
     $client->submit($login_form);
 
     // サイトデータ取得
-    $crawler = $client->request('GET', (string)env('APP_CALENDAR') . '/index.php?c=schedule&cal_mm=' . (string)$month);
+    $crawler = $client->request('GET', (string)env('APP_CALENDAR') . '/index.php?c=schedule&cal_yy=' . (string)$year . '&cal_mm=' . (string)$month);
 
     // データの取得
     $crawler->filter('ul.calendar_list01 li')->each(function ($node) use (&$days, &$plans) {
