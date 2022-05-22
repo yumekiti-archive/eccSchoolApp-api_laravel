@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Goutte\Client;
+use Symfony\Component\DomCrawler\Crawler;
 
 class ScrapingController extends Controller
 {
@@ -234,7 +235,7 @@ class ScrapingController extends Controller
         ")",
         true
       ) . "))";
-    $login_form = $login_form->selectButton("ログイン")->form();
+    $login_form = $login_form->filter("input[name='btnLogin']")->form();
     $login_form["txtUserId"] = $request->input("id");
     $login_form["txtPassword"] = $request->input("pw");
     $client->submit($login_form);
@@ -245,8 +246,11 @@ class ScrapingController extends Controller
       (string) env("FALCON_FRONT") . $token . (string) env("FALCON_ATTENDANCE")
     );
 
+    $newCrawler = new Crawler();
+    $newCrawler->addHtmlContent(mb_convert_encoding(mb_convert_encoding($crawler->html(), 'ISO-8859-1', 'UTF-8'), 'UTF-8', 'SJIS'));
+
     // データの取得
-    $crawler->filter("a")->each(function ($node) use (&$titles, &$rates) {
+    $newCrawler->filter("a")->each(function ($node) use (&$titles, &$rates) {
       $titles[] = strstr($node->text(), " ", true); // タイトル
       $rates[] = trim(strstr($node->text(), " ")); // 率
     });
@@ -289,7 +293,7 @@ class ScrapingController extends Controller
         ")",
         true
       ) . "))";
-    $login_form = $login_form->selectButton("ログイン")->form();
+    $login_form = $login_form->filter("input[name='btnLogin']")->form();
     $login_form["txtUserId"] = $request->input("id");
     $login_form["txtPassword"] = $request->input("pw");
     $client->submit($login_form);
@@ -299,7 +303,7 @@ class ScrapingController extends Controller
       "GET",
       (string) env("FALCON_FRONT") . $token . (string) env("FALCON_TIMETABLE")
     );
-
+    return $crawler = mb_convert_encoding(mb_convert_encoding($crawler->html(), 'ISO-8859-1', 'UTF-8'), 'UTF-8', 'SJIS');
     // データの取得
     $crawler->filter("div")->each(function ($node) use (&$dates) {
       if (strpos($node->text(), "/")) {
