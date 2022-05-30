@@ -303,51 +303,11 @@ class ScrapingController extends Controller
       "GET",
       (string) env("FALCON_FRONT") . $token . (string) env("FALCON_TIMETABLE")
     );
-    return $crawler = mb_convert_encoding(mb_convert_encoding($crawler->html(), 'ISO-8859-1', 'UTF-8'), 'UTF-8', 'SJIS');
-    // データの取得
-    $crawler->filter("div")->each(function ($node) use (&$dates) {
-      if (strpos($node->text(), "/")) {
-        $dates[] = $node->text(); // 日にち
-      }
-    });
 
-    // 取得したデータをjsonにする
-    foreach ($dates as $i => $date) {
-      $params[] = [
-        "date" => strstr($date, "(", true), // 日にち
-        "weekday" => ltrim(trim(strstr(strstr($date, "("), ")", true)), "("),
-        "timetable" => [],
-      ];
-      $datas = array_filter(
-        str_replace(
-          "限:",
-          "",
-          preg_split(
-            "/[0-9]/",
-            preg_replace(
-              "/( |　)/",
-              "",
-              str_replace(
-                "行事 ",
-                "",
-                strstr(
-                  strstr(
-                    $client->click($crawler->selectLink($date)->link())->text(),
-                    "行事"
-                  ),
-                  "戻る",
-                  true
-                )
-              )
-            )
-          )
-        )
-      );
-      $params[$i]["timetable"] += $datas;
-    }
-    $datas = json_encode($params, JSON_UNESCAPED_UNICODE);
+    // 解体
+    $link = $crawler->filter('#timetable1 > div:nth-child(17) > a')->link();
+    $crawler = $client->click($link);
 
-    // jsonにしたdatasを返す
-    return $datas;
+    return mb_convert_encoding(mb_convert_encoding($crawler->html(), 'ISO-8859-1', 'UTF-8'), 'UTF-8', 'SJIS');
   }
 }
