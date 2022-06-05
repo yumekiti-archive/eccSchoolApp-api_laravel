@@ -247,7 +247,13 @@ class ScrapingController extends Controller
     );
 
     $newCrawler = new Crawler();
-    $newCrawler->addHtmlContent(mb_convert_encoding(mb_convert_encoding($crawler->html(), 'ISO-8859-1', 'UTF-8'), 'UTF-8', 'SJIS'));
+    $newCrawler->addHtmlContent(
+      mb_convert_encoding(
+        mb_convert_encoding($crawler->html(), "ISO-8859-1", "UTF-8"),
+        "UTF-8",
+        "SJIS"
+      )
+    );
 
     // データの取得
     $newCrawler->filter("a")->each(function ($node) use (&$titles, &$rates) {
@@ -270,11 +276,9 @@ class ScrapingController extends Controller
     return $datas;
   }
 
-  public function timetable(Request $request)
+  public function timetable($week, Request $request)
   {
-    // データの初期化
-    $dates = []; // 日にち
-    $titles = []; // 日にち
+    $data = [];
 
     // Goutte\Client
     $client = new Client();
@@ -304,10 +308,95 @@ class ScrapingController extends Controller
       (string) env("FALCON_FRONT") . $token . (string) env("FALCON_TIMETABLE")
     );
 
-    // 解体
-    $link = $crawler->filter('#timetable1 > div:nth-child(17) > a')->link();
+    $weeks = [
+      "div:nth-child(14)",
+      "div:nth-child(15)",
+      "div:nth-child(16)",
+      "div:nth-child(17)",
+      "div:nth-child(18)",
+      "div:nth-child(19)",
+      "div:nth-child(20)",
+    ];
+
+    $newCrawler = new Crawler();
+    $newCrawler->addHtmlContent(
+      mb_convert_encoding(
+        mb_convert_encoding(
+          $crawler
+            ->filter("#timetable1 > " . $weeks[$week - 1] . " > a")
+            ->html(),
+          "ISO-8859-1",
+          "UTF-8"
+        ),
+        "UTF-8",
+        "SJIS"
+      )
+    );
+
+    // return $data['date'] = explode(">", explode("<", $newCrawler)[1])[0];
+    $data["date"] = substr(
+      substr(explode("<", $newCrawler->html())[2], 2),
+      0,
+      5
+    );
+    $data["weekday"] = explode(
+      ")",
+      explode("(", substr(explode("<", $newCrawler->html())[2], 2))[1]
+    )[0];
+
+    $link = $crawler
+      ->filter("#timetable1 > " . $weeks[$week - 1] . " > a")
+      ->link();
     $crawler = $client->click($link);
 
-    return mb_convert_encoding(mb_convert_encoding($crawler->html(), 'ISO-8859-1', 'UTF-8'), 'UTF-8', 'SJIS');
+    $timetables = [
+      ":nth-child(12)",
+      ":nth-child(14)",
+      ":nth-child(16)",
+      ":nth-child(18)",
+      ":nth-child(20)",
+    ];
+    $flag = true;
+
+    foreach ($timetables as $i => $timetable) {
+      if ($flag) {
+        $title = $crawler->filter("#timetable4 > " . $timetable)->text();
+        if (preg_match("/[0-9]/", $title)) {
+          $link = $crawler->filter("#timetable4 > " . $timetable)->link();
+          $crawler = $client->click($link);
+          $newCrawler = new Crawler();
+          $newCrawler->addHtmlContent(
+            mb_convert_encoding(
+              mb_convert_encoding($crawler->html(), "ISO-8859-1", "UTF-8"),
+              "UTF-8",
+              "SJIS"
+            )
+          );
+          $detail = explode(":", $newCrawler->html());
+          array_shift($detail);
+          array_pop($detail);
+
+          $subjectTitle = str_replace(
+            "?",
+            "",
+            explode("<", substr($detail[0], 1))[0]
+          );
+          $time = substr(substr($detail[2], 1), 0, 1);
+          $classroom = explode("<", substr($detail[4], 1))[0];
+          $teacher = explode("<", substr($detail[5], 1))[0];
+
+          $data["timetable"][$time] = [
+            "subjectTitle" => $subjectTitle,
+            "classroom" => $classroom,
+            "teacher" => $teacher,
+          ];
+          $crawler = $client->back();
+        } else {
+          $flag = false;
+        }
+      }
+    }
+
+    return $data;
   }
 }

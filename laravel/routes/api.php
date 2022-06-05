@@ -34,5 +34,5 @@ Route::controller(ScrapingController::class)->group(function () {
     Route::post('/attendance','attendance');
 
     // タイムテーブル
-    Route::post('/timetable','timetable');
+    Route::post('/timetable/{week}','timetable');
 });
