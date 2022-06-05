@@ -121,7 +121,7 @@ class ScrapingController extends Controller
     $data = $crawler->filter(".news div ~ div")->text(); // 内容
     $date = strstr($crawler->filter(".detail_title01")->text(), " ", true); // 日にち
     $tag = $crawler->filter(".icon01")->text(); // タグ
-    $attachments = explode("<a", $crawler->filter(".news")->html());
+    $attachments = explode("<a", explode("margin-bottom: 10px; text-align: center;", $crawler->filter(".news")->html())[1]);
 
     // 解体
     array_shift($attachments);
